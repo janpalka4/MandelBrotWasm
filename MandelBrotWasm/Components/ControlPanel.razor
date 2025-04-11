@@ -1,0 +1,89 @@
+﻿@using MandelBrotWasm.Logic
+<div class="controls-container">
+    <RadzenCard>
+        <RadzenText Text="Controls" TextStyle="TextStyle.DisplayH6" />
+        <RadzenStack Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
+            <div style="width: 100%">
+                <RadzenText Text="Max iterations" TextStyle="TextStyle.Caption" Style="display: block; margin-bottom: 0;" />
+                <RadzenNumeric @bind-Value="_maxIterations" Style="width: 100%" Placeholder="Max Iterations" Max="1000" Min="1" Step="1" Disabled="@Busy" />
+            </div>
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
+                <div>
+                    <RadzenText Text="Offset X" TextStyle="TextStyle.Caption" Style="display: block; margin-bottom: 0;" />
+                    <RadzenNumeric @bind-Value="_offsetX" Placeholder="Offset X" Max="2" Min="-2" Step="0.01" Disabled="@Busy" />
+                </div>
+                <div>
+                    <RadzenText Text="Offset Y" TextStyle="TextStyle.Caption" Style="display: block; margin-bottom: 0;" />
+                    <RadzenNumeric @bind-Value="_offsetY" Placeholder="Offset Y" Max="2" Min="-2" Step="0.01" Disabled="@Busy" />
+                </div>
+            </RadzenStack>
+            <div style="width: 100%">
+                <RadzenText Text="Zoom" TextStyle="TextStyle.Caption" Style="display: block; margin-bottom: 0;" />
+                <RadzenNumeric @bind-Value="_zoom" Style="width: 100%" Placeholder="Zoom" Max="1000" Min="@((decimal)0.01)" Step="0.01" Disabled="@Busy" />
+            </div>
+            <RadzenButton Style="width: 100%;" Click="OnPreviewClick" ButtonStyle="ButtonStyle.Secondary" Disabled="@Busy">
+                @if (Busy)
+                {
+                    <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.ExtraSmall" />
+                }
+                else
+                {
+                    <span>Preview</span>
+                }
+            </RadzenButton>
+            <RadzenButton Style="width: 100%;" Click="OnRenderClick" Disabled="@Busy">
+                @if (Busy) {
+                    <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.ExtraSmall"/>
+                }else{
+                    <span>Render</span>
+                }
+            </RadzenButton>
+        </RadzenStack>
+    </RadzenCard>
+</div>
+
+@code {
+    [Parameter]
+    public EventCallback<RenderRequestedEventArgs> RenderRequested { get; set; }
+    [Parameter]
+    public EventCallback<RenderRequestedEventArgs> PreviewRequested { get; set; }
+    [Parameter]
+    public bool Busy { get; set; }  = false;
+
+    private int _maxIterations = 50;
+    private float _zoom = 1f;
+    private float _offsetX = 0f;
+    private float _offsetY = 0f;
+
+    private void OnRenderClick()
+    {
+        var args = new RenderRequestedEventArgs
+            {
+                MaxIterations = _maxIterations,
+                Zoom = _zoom,
+                OffsetX = _offsetX,
+                OffsetY = _offsetY
+            };
+
+        if (RenderRequested.HasDelegate)
+        {
+            RenderRequested.InvokeAsync(args);
+        }
+    }
+
+    private void OnPreviewClick()
+    {
+        var args = new RenderRequestedEventArgs
+            {
+                MaxIterations = _maxIterations,
+                Zoom = _zoom,
+                OffsetX = _offsetX,
+                OffsetY = _offsetY
+            };
+
+        if (PreviewRequested.HasDelegate)
+        {
+            PreviewRequested.InvokeAsync(args);
+        }
+    }
+}
