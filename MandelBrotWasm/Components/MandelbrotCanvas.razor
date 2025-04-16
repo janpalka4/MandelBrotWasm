@@ -4,27 +4,32 @@
 
 @if (_busy)
 {
-    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap" Style="position: absolute; width: 100%; height: 100%; background: #00000010">
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap" Style="position: absolute; width: 100%; height: 100%; z-index: 10; background: #000000CE">
         <RadzenStack Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center">
             <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="@_progress" ShowValue="false" Mode="ProgressBarMode.Determinate" />
-            <RadzenText Text="Rendering"/>
+            <RadzenText Text="Rendering" />
         </RadzenStack>
     </RadzenStack>
 }
-<div style="width: 100%; height: 100vh;">
-    <BECanvas @ref="_beCanvas" Width="800" Height="800" />
+<div style="width: 100%; height: 100vh;" @onmousedown="@(() => _isMouseDown = true)" @onmouseup="@(() => _isMouseDown = false)" @onmouseleave="@(() => _isMouseDown = false)" @onmousemove="@OnMouseMove" @onmousewheel="@OnMouseWheel">
+    <BECanvas @ref="_beCanvas" Width="@_width" Height="@_height" />
 </div>
 
-<ControlPanel RenderRequested="OnRenderRequested" PreviewRequested="OnPreviewRequested" Busy="@_busy"/>
+<ControlPanel RenderRequested="OnRenderRequested" PreviewRequested="OnPreviewRequested" Busy="@_busy" OffsetX="@((float?)_context?.OffsetX)" OffsetY="@((float?)_context?.OffsetY)" Zoom="@((float?)_context?.Scale)" />
 
 @code {
     private BECanvasComponent _beCanvas;
-    //private CpuMandelbrotRenderContext _context;
-    private GpuMandelbrotRenderContext _context;
+    private MandelbrotRenderContext _context;
+    private CpuMandelbrotRenderContext _cpuContext;
+    private GpuMandelbrotRenderContext _gpuContext;
     private bool _busy = false;
     private bool _shouldRender = true;
     private bool _shouldPreview = false;
     private float _progress = 0f;
+    private int _width = 800;
+    private int _height = 600;
+
+    private bool _isMouseDown = false;
 
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -33,18 +38,27 @@
         {
             if (firstRender)
             {
-                //_context = new CpuMandelbrotRenderContext(_beCanvas, JSRuntime);
-                _context = new GpuMandelbrotRenderContext(_beCanvas, JSRuntime);
-                _context.OnPresent += OnPresent;
-                _context.OnProgress += (sender,progress) => { _progress = float.Round(progress * 100f,2); StateHasChanged(); };
+                _cpuContext = new CpuMandelbrotRenderContext(_beCanvas, JSRuntime);
+                _cpuContext.OnPresent += OnPresent;
+                _cpuContext.OnProgress += (sender, progress) => { _progress = float.Round(progress * 100f, 2); StateHasChanged(); };
+
+                _gpuContext = new GpuMandelbrotRenderContext(_beCanvas, JSRuntime);
+                _gpuContext.OnPresent += OnPresent;
+                _gpuContext.OnProgress += (sender, progress) => { _progress = float.Round(progress * 100f, 2); StateHasChanged(); };
+
+                _context = _gpuContext;
             }
+
+            await _context.ResizeAsync();
+            _width = _context.Width;
+            _height = _context.Height;
 
             if (_shouldRender)
             {
                 _busy = true;
                 _shouldRender = false;
 
-                await HideImg();
+                //await HideImg();
 
                 _context.Render();
 
@@ -54,7 +68,7 @@
             {
                 _busy = true;
                 _shouldPreview = false;
-                await HideImg();
+                //await HideImg();
                 _context.Preview();
                 StateHasChanged();
             }
@@ -63,23 +77,46 @@
         await base.OnAfterRenderAsync(firstRender);
     }
 
-    private void OnRenderRequested(RenderRequestedEventArgs e){
+    private async void OnRenderRequested(RenderRequestedEventArgs e)
+    {
+        if (e.RenderDevice == RenderDevice.CPU)
+        {
+            _context = _cpuContext;
+        }
+        else
+        {
+            _context = _gpuContext;
+            await HideImg();
+        }
+
         _context.MaxIterations = e.MaxIterations;
-        _context.Scale = 1f/e.Zoom;
+        _context.Scale = 1f / e.Zoom;
         _context.OffsetX = e.OffsetX;
         _context.OffsetY = e.OffsetY;
+        _context.SetType = e.SetType;
 
         _shouldRender = true;
 
         StateHasChanged();
     }
 
-    private void OnPreviewRequested(RenderRequestedEventArgs e)
+    private async void OnPreviewRequested(RenderRequestedEventArgs e)
     {
+        if (e.RenderDevice == RenderDevice.CPU)
+        {
+            _context = _cpuContext;
+        }
+        else
+        {
+            _context = _gpuContext;
+            await HideImg();
+        }
+
         _context.MaxIterations = e.MaxIterations;
         _context.Scale = 1f / e.Zoom;
         _context.OffsetX = e.OffsetX;
         _context.OffsetY = e.OffsetY;
+        _context.SetType = e.SetType;
 
         _shouldPreview = true;
 
@@ -91,6 +128,24 @@
     private void OnPresent(object? sender, EventArgs e)
     {
         _busy = false;
+        StateHasChanged();
+    }
+
+    private void OnMouseMove(MouseEventArgs e)
+    {
+        if (_isMouseDown)
+        {
+            _context.AddOffsetPx(-e.MovementX * 2, e.MovementY * 2);
+
+            _shouldRender = true;
+            StateHasChanged();
+        }
+    }
+
+    private void OnMouseWheel(WheelEventArgs e)
+    {
+        _context.AddScale(-e.DeltaY / 1000 * _context.Scale);
+        _shouldRender = true;
         StateHasChanged();
     }
 }

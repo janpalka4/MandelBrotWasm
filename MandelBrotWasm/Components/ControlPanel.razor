@@ -1,8 +1,17 @@
 ﻿@using MandelBrotWasm.Logic
 <div class="controls-container">
-    <RadzenCard>
-        <RadzenText Text="Controls" TextStyle="TextStyle.DisplayH6" />
+    <RadzenPanel AllowCollapse Text="Controls">
+        <br/>
+@*         <RadzenText Text="Controls" TextStyle="TextStyle.DisplayH6" /> *@
         <RadzenStack Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
+            <div style="width: 100%">
+                <RadzenText Text="Render Device" TextStyle="TextStyle.Caption" Style="display: block; margin-bottom: 0;" />
+                <RadzenDropDown TValue="string" Data="@(new []{"CPU","GPU"})" @bind-Value="_renderDevice" Style="width: 100%" Disabled="@Busy" />
+            </div>
+            <div style="width: 100%">
+                <RadzenText Text="Set Type" TextStyle="TextStyle.Caption" Style="display: block; margin-bottom: 0;" />
+                <RadzenDropDown TValue="string" Data="@(new []{"Mandelbrot","Julia"})" @bind-Value="_setType" Style="width: 100%" Disabled="@Busy" />
+            </div>
             <div style="width: 100%">
                 <RadzenText Text="Max iterations" TextStyle="TextStyle.Caption" Style="display: block; margin-bottom: 0;" />
                 <RadzenNumeric @bind-Value="_maxIterations" Style="width: 100%" Placeholder="Max Iterations" Max="1000" Min="1" Step="1" Disabled="@Busy" />
@@ -32,14 +41,17 @@
                 }
             </RadzenButton>
             <RadzenButton Style="width: 100%;" Click="OnRenderClick" Disabled="@Busy">
-                @if (Busy) {
-                    <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.ExtraSmall"/>
-                }else{
+                @if (Busy)
+                {
+                    <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.ExtraSmall" />
+                }
+                else
+                {
                     <span>Render</span>
                 }
             </RadzenButton>
         </RadzenStack>
-    </RadzenCard>
+    </RadzenPanel>
 </div>
 
 @code {
@@ -47,22 +59,46 @@
     public EventCallback<RenderRequestedEventArgs> RenderRequested { get; set; }
     [Parameter]
     public EventCallback<RenderRequestedEventArgs> PreviewRequested { get; set; }
+
     [Parameter]
-    public bool Busy { get; set; }  = false;
+    public int? MaxIterations { get; set; }
+    [Parameter]
+    public float? Zoom { get; set; }
+    [Parameter]
+    public float? OffsetX { get; set; }
+    [Parameter]
+    public float? OffsetY { get; set; }
+
+    [Parameter]
+    public bool Busy { get; set; } = false;
 
     private int _maxIterations = 50;
     private float _zoom = 1f;
     private float _offsetX = 0f;
     private float _offsetY = 0f;
+    private string _renderDevice = "GPU";
+    private string _setType = "Mandelbrot";
+
+    protected override void OnParametersSet()
+    {
+        _maxIterations = MaxIterations.HasValue ? MaxIterations.Value : _maxIterations;
+        _zoom = Zoom.HasValue ?  Zoom.Value : _zoom;
+        _offsetX = OffsetX.HasValue ? OffsetX.Value : _offsetX;
+        _offsetY = OffsetY.HasValue ? OffsetY.Value : _offsetY;
+
+        base.OnParametersSet();
+    }
 
     private void OnRenderClick()
     {
         var args = new RenderRequestedEventArgs
             {
                 MaxIterations = _maxIterations,
-                Zoom = _zoom,
+                Zoom = 1f / _zoom,
                 OffsetX = _offsetX,
-                OffsetY = _offsetY
+                OffsetY = _offsetY,
+                RenderDevice = Enum.Parse<RenderDevice>(_renderDevice),
+                SetType = Enum.Parse<SetType>(_setType)
             };
 
         if (RenderRequested.HasDelegate)
@@ -76,9 +112,11 @@
         var args = new RenderRequestedEventArgs
             {
                 MaxIterations = _maxIterations,
-                Zoom = _zoom,
+                Zoom = 1f / _zoom,
                 OffsetX = _offsetX,
-                OffsetY = _offsetY
+                OffsetY = _offsetY,
+                RenderDevice = Enum.Parse<RenderDevice>(_renderDevice),
+                SetType = Enum.Parse<SetType>(_setType)
             };
 
         if (PreviewRequested.HasDelegate)

@@ -3,6 +3,8 @@ using Blazor.Extensions.Canvas.Canvas2D;
 using Blazor.Extensions.Canvas.WebGL;
 using Microsoft.JSInterop;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.ColorSpaces;
+using SixLabors.ImageSharp.ColorSpaces.Conversion;
 using SixLabors.ImageSharp.PixelFormats;
 
 namespace MandelBrotWasm.Logic
@@ -11,16 +13,16 @@ namespace MandelBrotWasm.Logic
     {
         private Canvas2DContext _context;
 
-        public CpuMandelbrotRenderContext(BECanvasComponent beCanvasComponent,IJSRuntime jSRuntime) : base(beCanvasComponent, jSRuntime)
+        public CpuMandelbrotRenderContext(BECanvasComponent beCanvasComponent, IJSRuntime jSRuntime) : base(beCanvasComponent, jSRuntime)
         {
         }
 
         public override async Task Render()
         {
-            if(_context == null)
+            /*if(_context == null)
             {
                 _context = await BECanvasComponent.CreateCanvas2DAsync();
-            }
+            }*/
 
             await ResizeAsync();
 
@@ -41,7 +43,7 @@ namespace MandelBrotWasm.Logic
                     double w = 0;
                     int i = 0;
 
-                    while(x2 + y2 < 4 && i < MaxIterations)
+                    while (x2 + y2 < 4 && i < MaxIterations)
                     {
                         double x = x2 - y2 + x0;
                         double y = w - x2 - y2 + y0;
@@ -56,15 +58,30 @@ namespace MandelBrotWasm.Logic
 
                     if (cx < _width && cy < _height)
                     {
-                        byte r = (byte)(255 * (1.0 - i / (float)MaxIterations));
-                        image[cx, cy] = new Rgba32(r,r,r,255);
+                        double smoothI = 0.0;
+                        if (i < MaxIterations)
+                        {
+                            double logZn = Math.Log(x2 * x2 + y2 * y2) / 2.0;
+                            double nu = Math.Log(logZn / Math.Log(2.0)) / Math.Log(2.0);
+                            smoothI = i + 1.0 - nu;
+                        }
+                        else
+                        {
+                            smoothI = MaxIterations;
+                        }
+
+                        byte r = (byte)(252 * (smoothI / MaxIterations));
+                        Hsv hsv = new Hsv(252 - r, 255, i == MaxIterations ? 0 : 255);
+                        Rgb rgb = hsv.ToRgb();
+
+                        image[cx, cy] = new Rgba32(rgb.R,rgb.G,rgb.B, 255);
                     }
 
                     cy++;
 
 
                     float progress = (float)(cx * _height + cy) / (_width * _height);
-                    if(progress - prevProgress > 0.0025)
+                    if (progress - prevProgress > 0.0025)
                     {
                         await Task.Delay(1);
                         prevProgress = progress;

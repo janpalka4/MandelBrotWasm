@@ -10,6 +10,7 @@ namespace MandelBrotWasm.Logic
         public event EventHandler<float> OnProgress;
         public event EventHandler<EventArgs> OnPresent;
 
+        public SetType SetType { get; set; } = SetType.Mandelbrot;
         public double OffsetX { get; set; } = 0;
         public double OffsetY { get; set; } = 0;
         public double Scale
@@ -23,6 +24,8 @@ namespace MandelBrotWasm.Logic
             set => _maxIterations = int.Max(1, value);
         }
 
+        public int Width { get => _width; }
+        public int Height { get => _height; }
 
         private double _scale = 1.0;
         private int _maxIterations = 50;
@@ -69,7 +72,7 @@ namespace MandelBrotWasm.Logic
 
                     if (x >= 0 && y >= 0 && x < _width && y < _height)
                     {
-                        if(cx < _width && cy < _height)
+                        if (cx < _width && cy < _height)
                             image[cx, cy] = lastRender[x, y];
                     }
                     else
@@ -110,6 +113,17 @@ namespace MandelBrotWasm.Logic
         {
             _width = width;
             _height = height;
+        }
+
+        public void AddOffsetPx(double offsetX, double offsetY)
+        {
+            OffsetX += offsetX / _width / _scale;
+            OffsetY += offsetY / _height / _scale;
+        }
+
+        public void AddScale(double scale)
+        {
+            Scale += scale;
         }
 
         protected ComplexPlaneInfo GetComplexPlaneInfo() => new ComplexPlaneInfo(_width, _height, Scale, OffsetX, OffsetY);

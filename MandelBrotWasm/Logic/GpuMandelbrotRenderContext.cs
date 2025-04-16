@@ -12,15 +12,24 @@ namespace MandelBrotWasm.Logic
     {
         private WebGLContext _context;
         private WebGLProgram _shaderProgram;
+        private WebGLProgram _shaderProgramJulia;
         private WebGLBuffer _vertexBuffer;
 
         private float[] _screenVertices = {-1,-1,0,  1,-1,0,  1,1,0,  -1,1,0};
         
         private WebGLUniformLocation _uniformLocationStart;
         private WebGLUniformLocation _uniformLocationEnd;
+        private WebGLUniformLocation _UniformLocationMaxIterations;
+        private WebGLUniformLocation _UniformTime;
+        private WebGLUniformLocation _uniformLocationStartJulia;
+        private WebGLUniformLocation _uniformLocationEndJulia;
+        private WebGLUniformLocation _UniformLocationMaxIterationsJulia;
+
+        private readonly DateTime _startTime = DateTime.Now;
 
         public GpuMandelbrotRenderContext(BECanvasComponent beCanvasComponent,IJSRuntime jSRuntime) : base(beCanvasComponent, jSRuntime)
         {
+            
         }
 
         public override async Task Render()
@@ -37,9 +46,22 @@ namespace MandelBrotWasm.Logic
             // Render Mandelbrot set using WebGL
             await _context!.ClearAsync(BufferBits.COLOR_BUFFER_BIT);
 
-            await _context.UseProgramAsync(_shaderProgram);
-            await _context.UniformAsync(_uniformLocationStart, (float)complexPlane.startX, (float)complexPlane.startY);
-            await _context.UniformAsync(_uniformLocationEnd, (float)complexPlane.endX, (float)complexPlane.endY);
+            if (SetType == SetType.Mandelbrot)
+            {
+                await _context.UseProgramAsync(_shaderProgram);
+                await _context.UniformAsync(_uniformLocationStart,(float)complexPlane.startX, (float)complexPlane.startY);
+                await _context.UniformAsync(_uniformLocationEnd,(float)complexPlane.endX, (float)complexPlane.endY);
+                await _context.UniformAsync(_UniformLocationMaxIterations, MaxIterations);
+            }
+            else
+            {
+                await _context.UseProgramAsync(_shaderProgramJulia);
+                await _context.UniformAsync(_UniformTime, (float)(DateTime.Now - _startTime).TotalSeconds);
+                await _context.UniformAsync(_uniformLocationStartJulia, (float)complexPlane.startX, (float)complexPlane.startY);
+                await _context.UniformAsync(_uniformLocationEndJulia, (float)complexPlane.endX, (float)complexPlane.endY);
+                await _context.UniformAsync(_UniformLocationMaxIterationsJulia, MaxIterations);
+            }
+            
 
             await _context.BindBufferAsync(BufferType.ARRAY_BUFFER, _vertexBuffer);
             
@@ -60,8 +82,10 @@ namespace MandelBrotWasm.Logic
             // Load and compile shaders
             string vertexShaderSource = await LoadShader("VertexShader.glsl");
             string fragmentShaderSource = await LoadShader("FragmentShader.glsl");
+            string fragmentShaderJuliaSource = await LoadShader("FragmentShaderJulia.glsl");
             WebGLShader vertexShader = await CompileShader(vertexShaderSource, ShaderType.VERTEX_SHADER);
             WebGLShader fragmentShader = await CompileShader(fragmentShaderSource, ShaderType.FRAGMENT_SHADER);
+            WebGLShader fragmentShaderJulia = await CompileShader(fragmentShaderJuliaSource, ShaderType.FRAGMENT_SHADER);
 
             // Create and link shader program
             _shaderProgram = await _context.CreateProgramAsync();
@@ -75,9 +99,25 @@ namespace MandelBrotWasm.Logic
                 throw new Exception($"Program link error: {programLog}");
             }
 
+            _shaderProgramJulia = await _context.CreateProgramAsync();
+            await _context.AttachShaderAsync(_shaderProgramJulia, vertexShader);
+            await _context.AttachShaderAsync(_shaderProgramJulia, fragmentShaderJulia);
+            await _context.LinkProgramAsync(_shaderProgramJulia);
+
+            string programLogJulia = await _context.GetProgramInfoLogAsync(_shaderProgramJulia);
+            if (!string.IsNullOrEmpty(programLogJulia))
+            {
+                throw new Exception($"Program link error: {programLogJulia}");
+            }
+
             // Get uniform locations
             _uniformLocationStart = await _context.GetUniformLocationAsync(_shaderProgram, "u_start");
             _uniformLocationEnd = await _context.GetUniformLocationAsync(_shaderProgram, "u_end");
+            _UniformLocationMaxIterations = await _context.GetUniformLocationAsync(_shaderProgram, "u_maxIterations");
+            _UniformTime = await _context.GetUniformLocationAsync(_shaderProgramJulia, "u_time");
+            _uniformLocationStartJulia = await _context.GetUniformLocationAsync(_shaderProgramJulia, "u_start");
+            _uniformLocationEndJulia = await _context.GetUniformLocationAsync(_shaderProgramJulia, "u_end");
+            _UniformLocationMaxIterationsJulia = await _context.GetUniformLocationAsync(_shaderProgramJulia, "u_maxIterations");
 
             // Set attribute locations
             uint positionLocation = (uint)await _context.GetAttribLocationAsync(_shaderProgram, "a_position");

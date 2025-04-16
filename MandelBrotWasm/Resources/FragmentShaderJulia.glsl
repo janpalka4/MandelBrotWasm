@@ -3,6 +3,7 @@
 uniform vec2 u_start;
 uniform vec2 u_end;
 uniform int u_maxIterations;
+uniform float u_time;
 
 varying vec3 v_coord;
 
@@ -16,8 +17,8 @@ vec3 hsv2rgb(vec3 c)
 void main()
 {
     vec2 v_n = (v_coord.xy + vec2(1.0)) / 2.0 * (u_end - u_start);
-    vec2 c0 = u_start + v_n;
-    vec2 c2= vec2(0.0);
+    vec2 c0 = vec2(cos(u_time),sin(u_time));
+    vec2 c2 = u_start + v_n;
     float w = 0.0;
     float i = 0.0;
     float smoothI = 0.0;
