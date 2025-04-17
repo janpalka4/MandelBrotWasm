@@ -70,11 +70,11 @@ namespace MandelBrotWasm.Logic
                             smoothI = MaxIterations;
                         }
 
-                        byte r = (byte)(252 * (smoothI / MaxIterations));
-                        Hsv hsv = new Hsv(252 - r, 255, i == MaxIterations ? 0 : 255);
+                        double r = smoothI / MaxIterations;
+                        Hsv hsv = new Hsv((float)(250 - r * 250), 1,i == MaxIterations ? 0 : 1);
                         Rgb rgb = hsv.ToRgb();
 
-                        image[cx, cy] = new Rgba32(rgb.R,rgb.G,rgb.B, 255);
+                        image[cx, cy] = new Rgba32(rgb.R,rgb.G,rgb.B, 1);
                     }
 
                     cy++;

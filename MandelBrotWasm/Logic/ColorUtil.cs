@@ -6,58 +6,94 @@ namespace MandelBrotWasm.Logic
     {
         public static Rgb ToRgb(this Hsv hsv)
         {
-            double h = hsv.H;
-            double s = hsv.S;
-            double v = hsv.V;
-
-            double c = v * s;
-            double x = c * (1 - Math.Abs((h / 60) % 2 - 1));
-            double m = v - c;
-
-            double r, g, b;
-
-            if (h >= 0 && h < 60)
+            double H = hsv.H;
+            double V = hsv.V;
+            double S = hsv.S;
+            while (H < 0) { H += 360; };
+            while (H >= 360) { H -= 360; };
+            double R, G, B;
+            if (V <= 0)
+            { R = G = B = 0; }
+            else if (S <= 0)
             {
-                r = c;
-                g = x;
-                b = 0;
-            }
-            else if (h >= 60 && h < 120)
-            {
-                r = x;
-                g = c;
-                b = 0;
-            }
-            else if (h >= 120 && h < 180)
-            {
-                r = 0;
-                g = c;
-                b = x;
-            }
-            else if (h >= 180 && h < 240)
-            {
-                r = 0;
-                g = x;
-                b = c;
-            }
-            else if (h >= 240 && h < 300)
-            {
-                r = x;
-                g = 0;
-                b = c;
+                R = G = B = V;
             }
             else
             {
-                r = c;
-                g = 0;
-                b = x;
+                double hf = H / 60.0;
+                int i = (int)Math.Floor(hf);
+                double f = hf - i;
+                double pv = V * (1 - S);
+                double qv = V * (1 - S * f);
+                double tv = V * (1 - S * (1 - f));
+                switch (i)
+                {
+
+                    // Red is the dominant color
+
+                    case 0:
+                        R = V;
+                        G = tv;
+                        B = pv;
+                        break;
+
+                    // Green is the dominant color
+
+                    case 1:
+                        R = qv;
+                        G = V;
+                        B = pv;
+                        break;
+                    case 2:
+                        R = pv;
+                        G = V;
+                        B = tv;
+                        break;
+
+                    // Blue is the dominant color
+
+                    case 3:
+                        R = pv;
+                        G = qv;
+                        B = V;
+                        break;
+                    case 4:
+                        R = tv;
+                        G = pv;
+                        B = V;
+                        break;
+
+                    // Red is the dominant color
+
+                    case 5:
+                        R = V;
+                        G = pv;
+                        B = qv;
+                        break;
+
+                    // Just in case we overshoot on our math by a little, we put these here. Since its a switch it won't slow us down at all to put these here.
+
+                    case 6:
+                        R = V;
+                        G = tv;
+                        B = pv;
+                        break;
+                    case -1:
+                        R = V;
+                        G = pv;
+                        B = qv;
+                        break;
+
+                    // The color is not defined, we should throw an error.
+
+                    default:
+                        //LFATAL("i Value error in Pixel conversion, Value is %d", i);
+                        R = G = B = V; // Just pretend its black/white
+                        break;
+                }
             }
 
-            r = (r + m) * 255;
-            g = (g + m) * 255;
-            b = (b + m) * 255;
-
-            return new Rgb((float)r, (float)g, (float)b);
+            return new Rgb((float)R, (float)G, (float)B);
         }
     }
 }

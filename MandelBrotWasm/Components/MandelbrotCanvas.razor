@@ -11,7 +11,7 @@
         </RadzenStack>
     </RadzenStack>
 }
-<div style="width: 100%; height: 100vh;" @onmousedown="@(() => _isMouseDown = true)" @onmouseup="@(() => _isMouseDown = false)" @onmouseleave="@(() => _isMouseDown = false)" @onmousemove="@OnMouseMove" @onmousewheel="@OnMouseWheel">
+<div style="width: 100%; height: 100vh;" @ontouchstart="OnTouchStart" @ontouchend="OnTouchEnd" @ontouchleave="OnTouchEnd" @ontouchmove="OnTouchMove" @onmousedown="@(() => _isMouseDown = true)" @onmouseup="@(() => _isMouseDown = false)" @onmouseleave="@(() => _isMouseDown = false)" @onmousemove="@OnMouseMove" @onmousewheel="@OnMouseWheel">
     <BECanvas @ref="_beCanvas" Width="@_width" Height="@_height" />
 </div>
 
@@ -30,6 +30,7 @@
     private int _height = 600;
 
     private bool _isMouseDown = false;
+    private bool _isScaling = false;
 
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -129,6 +130,38 @@
     {
         _busy = false;
         StateHasChanged();
+    }
+
+    private void OnTouchStart(TouchEventArgs e)
+    {
+        _isMouseDown = true;
+        _isScaling = e.Touches.Length > 1;
+    }
+
+    private void OnTouchEnd(TouchEventArgs e)
+    {
+        _isMouseDown = false;
+        _isScaling = false;
+    }
+
+    private void OnTouchMove(TouchEventArgs e)
+    {
+        if (_isMouseDown)
+        {
+            if(_isScaling){
+                if (e.Touches.Length > 1)
+                {
+                    var dx = e.Touches[0].ClientX - e.Touches[1].ClientX;
+                    var dy = e.Touches[0].ClientY - e.Touches[1].ClientY;
+                    var distance = Math.Sqrt(dx * dx + dy * dy);
+                    _context.AddScale((float)distance / 1000f);
+                }
+            }else{
+                _context.AddOffsetPx(-e.Touches[0].ClientX * 2, e.Touches[0].ClientY * 2);
+                _shouldRender = true;
+                StateHasChanged();
+            }
+        }
     }
 
     private void OnMouseMove(MouseEventArgs e)
