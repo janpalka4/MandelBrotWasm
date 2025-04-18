@@ -14,9 +14,9 @@
             </div>
             <div style="width: 100%">
                 <RadzenText Text="Max iterations" TextStyle="TextStyle.Caption" Style="display: block; margin-bottom: 0;" />
-                <RadzenNumeric @bind-Value="_maxIterations" Style="width: 100%" Placeholder="Max Iterations" Max="1000" Min="1" Step="1" Disabled="@Busy" />
+                <RadzenNumeric @bind-Value="_maxIterations" Style="width: 100%" Placeholder="Max Iterations" Max="100000" Min="1" Step="1" Disabled="@Busy" />
             </div>
-            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center" Wrap="FlexWrap.NoWrap">
                 <div>
                     <RadzenText Text="Offset X" TextStyle="TextStyle.Caption" Style="display: block; margin-bottom: 0;" />
                     <RadzenNumeric @bind-Value="_offsetX" Placeholder="Offset X" Max="2" Min="-2" Step="0.01" Disabled="@Busy" />
@@ -28,7 +28,7 @@
             </RadzenStack>
             <div style="width: 100%">
                 <RadzenText Text="Zoom" TextStyle="TextStyle.Caption" Style="display: block; margin-bottom: 0;" />
-                <RadzenNumeric @bind-Value="_zoom" Style="width: 100%" Placeholder="Zoom" Max="1000" Min="@((decimal)0.01)" Step="0.01" Disabled="@Busy" />
+                <RadzenNumeric @bind-Value="_zoom" Style="width: 100%" Placeholder="Zoom" Max="10000000" Min="@((decimal)0.01)" Step="0.01" Disabled="@Busy" />
             </div>
             @*  <RadzenButton Style="width: 100%;" Click="OnPreviewClick" ButtonStyle="ButtonStyle.Secondary" Disabled="@Busy">
                 @if (Busy)
