@@ -74,7 +74,7 @@ namespace MandelBrotWasm.Logic
         {
             // Initialize WebGL context and shaders here
             // Load shaders, create buffers, etc.
-            _context = await BECanvasComponent.CreateWebGLAsync();
+            _context = await BECanvasComponent.CreateWebGLAsync(new WebGLContextAttributes() { Alpha = false, PreserveDrawingBuffer = true, Antialias = false }); 
 
             await _context.ViewportAsync(0, 0, _width, _height);
             await _context.ClearColorAsync(0, 0, 0, 1);

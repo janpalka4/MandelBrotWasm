@@ -50,7 +50,7 @@ void main()
 
     float r = smoothI / float(u_maxIterations);
 
-    vec3 hsv = vec3(0.7 - r * 0.7,1.0,smoothstep(0.01,0.1,1.0-r));
+    vec3 hsv = vec3(0.7 - r * 0.7,1.0,smoothstep(0.01,0.5,1.0-r));
 
     /*if(r == 1.0){
         hsv = vec3(0.0,0.0,0.0);

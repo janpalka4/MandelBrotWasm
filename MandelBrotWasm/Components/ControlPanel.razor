@@ -1,12 +1,12 @@
 ﻿@using MandelBrotWasm.Logic
 <div class="controls-container">
-    <RadzenPanel AllowCollapse Text="Controls">
-        <br/>
-@*         <RadzenText Text="Controls" TextStyle="TextStyle.DisplayH6" /> *@
+    <RadzenPanel AllowCollapse Collapsed Text="Controls">
+        <br />
+        @*         <RadzenText Text="Controls" TextStyle="TextStyle.DisplayH6" /> *@
         <RadzenStack Orientation="Orientation.Vertical" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
             <div style="width: 100%">
                 <RadzenText Text="Render Device" TextStyle="TextStyle.Caption" Style="display: block; margin-bottom: 0;" />
-                <RadzenDropDown TValue="string" Data="@(new []{"CPU","GPU"})" @bind-Value="_renderDevice" Style="width: 100%" Disabled="@Busy" />
+                <RadzenDropDown TValue="string" Data="@(new []{"CPU","GPU"})" @bind-Value="_renderDevice" Style="width: 100%" Disabled="@(Busy || _renderingJulia)" />
             </div>
             <div style="width: 100%">
                 <RadzenText Text="Set Type" TextStyle="TextStyle.Caption" Style="display: block; margin-bottom: 0;" />
@@ -30,7 +30,7 @@
                 <RadzenText Text="Zoom" TextStyle="TextStyle.Caption" Style="display: block; margin-bottom: 0;" />
                 <RadzenNumeric @bind-Value="_zoom" Style="width: 100%" Placeholder="Zoom" Max="1000" Min="@((decimal)0.01)" Step="0.01" Disabled="@Busy" />
             </div>
-            <RadzenButton Style="width: 100%;" Click="OnPreviewClick" ButtonStyle="ButtonStyle.Secondary" Disabled="@Busy">
+            @*  <RadzenButton Style="width: 100%;" Click="OnPreviewClick" ButtonStyle="ButtonStyle.Secondary" Disabled="@Busy">
                 @if (Busy)
                 {
                     <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.ExtraSmall" />
@@ -39,15 +39,22 @@
                 {
                     <span>Preview</span>
                 }
-            </RadzenButton>
-            <RadzenButton Style="width: 100%;" Click="OnRenderClick" Disabled="@Busy">
+            </RadzenButton> *@
+            <RadzenButton Style="width: 100%;" ButtonStyle="@(_renderingJulia ? ButtonStyle.Danger : ButtonStyle.Primary)" Click="OnRenderClick" Disabled="@Busy">
                 @if (Busy)
                 {
-                    <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.ExtraSmall" />
+                    <RadzenProgressBarCircular ProgressBarStyle="@(_renderingJulia ? ProgressBarStyle.Danger : ProgressBarStyle.Primary)" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.ExtraSmall" />
                 }
                 else
                 {
-                    <span>Render</span>
+                    @if (_renderingJulia)
+                    {
+                        <span>Stop</span>
+                    }
+                    else
+                    {
+                        <span>Render</span>
+                    }
                 }
             </RadzenButton>
         </RadzenStack>
@@ -79,10 +86,12 @@
     private string _renderDevice = "GPU";
     private string _setType = "Mandelbrot";
 
+    private bool _renderingJulia = false;
+
     protected override void OnParametersSet()
     {
         _maxIterations = MaxIterations.HasValue ? MaxIterations.Value : _maxIterations;
-        _zoom = Zoom.HasValue ?  Zoom.Value : _zoom;
+        _zoom = Zoom.HasValue ? Zoom.Value : _zoom;
         _offsetX = OffsetX.HasValue ? OffsetX.Value : _offsetX;
         _offsetY = OffsetY.HasValue ? OffsetY.Value : _offsetY;
 
@@ -91,6 +100,12 @@
 
     private void OnRenderClick()
     {
+        if (_renderingJulia)
+        {
+            _renderingJulia = false;
+            return;
+        }
+
         var args = new RenderRequestedEventArgs
             {
                 MaxIterations = _maxIterations,
@@ -101,9 +116,37 @@
                 SetType = Enum.Parse<SetType>(_setType)
             };
 
-        if (RenderRequested.HasDelegate)
+        if (args.SetType == SetType.Mandelbrot)
         {
-            RenderRequested.InvokeAsync(args);
+            if (RenderRequested.HasDelegate)
+            {
+                RenderRequested.InvokeAsync(args);
+            }
+        }
+        else { 
+            RenderJulia();
+        }
+    }
+
+    private async Task RenderJulia(){
+        RenderDevice renderDevice = Enum.Parse<RenderDevice>(_renderDevice);
+        _renderingJulia = true;
+        while (_renderingJulia)
+        {
+            var args = new RenderRequestedEventArgs
+                {
+                    MaxIterations = _maxIterations,
+                    Zoom = 1f / _zoom,
+                    OffsetX = _offsetX,
+                    OffsetY = _offsetY,
+                    RenderDevice = renderDevice,
+                    SetType = SetType.Julia
+                };
+            if (RenderRequested.HasDelegate)
+            {
+                await RenderRequested.InvokeAsync(args);
+            }
+            await Task.Delay(16);
         }
     }
 

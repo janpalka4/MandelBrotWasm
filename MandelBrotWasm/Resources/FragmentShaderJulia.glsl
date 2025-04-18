@@ -17,7 +17,7 @@ vec3 hsv2rgb(vec3 c)
 void main()
 {
     vec2 v_n = (v_coord.xy + vec2(1.0)) / 2.0 * (u_end - u_start);
-    vec2 c0 = vec2(cos(u_time),sin(u_time));
+    vec2 c0 = vec2(cos(u_time*0.25),sin(u_time*0.25));
     vec2 c2 = u_start + v_n;
     float w = 0.0;
     float i = 0.0;
@@ -51,7 +51,7 @@ void main()
 
     float r = smoothI / float(u_maxIterations);
 
-    vec3 hsv = vec3(0.7 - r * 0.7,1.0,smoothstep(0.01,0.1,1.0-r));
+    vec3 hsv = vec3(0.7 - r * 0.7,1.0,smoothstep(0.01,0.5,1.0-r));
 
     /*if(r == 1.0){
         hsv = vec3(0.0,0.0,0.0);

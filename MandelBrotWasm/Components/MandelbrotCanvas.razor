@@ -31,6 +31,9 @@
 
     private bool _isMouseDown = false;
     private bool _isScaling = false;
+    private double? _previousTouchDistance = null;
+    private double? _previousTouchX = null;
+    private double? _previousTouchY = null;
 
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -142,24 +145,54 @@
     {
         _isMouseDown = false;
         _isScaling = false;
+
+        _previousTouchDistance = null;
+        _previousTouchX = null;
+        _previousTouchY = null;
     }
 
     private void OnTouchMove(TouchEventArgs e)
     {
         if (_isMouseDown)
         {
-            if(_isScaling){
+            if (_isScaling)
+            {
                 if (e.Touches.Length > 1)
                 {
                     var dx = e.Touches[0].ClientX - e.Touches[1].ClientX;
                     var dy = e.Touches[0].ClientY - e.Touches[1].ClientY;
-                    var distance = Math.Sqrt(dx * dx + dy * dy);
-                    _context.AddScale((float)distance / 1000f);
+                    var newDistance = Math.Sqrt(dx * dx + dy * dy);
+
+                    if (_previousTouchDistance.HasValue)
+                    {
+                        var zoomDelta = (float)(newDistance - _previousTouchDistance.Value) / 500f * _context.Scale;
+                        _context.AddScale(zoomDelta);
+
+                        _shouldRender = true;
+                        StateHasChanged();
+                    }
+
+                    _previousTouchDistance = newDistance;
                 }
-            }else{
-                _context.AddOffsetPx(-e.Touches[0].ClientX * 2, e.Touches[0].ClientY * 2);
-                _shouldRender = true;
-                StateHasChanged();
+                else
+                {
+                    _previousTouchDistance = null;
+                }
+            }
+            else
+            {
+                if (_previousTouchX.HasValue && _previousTouchY.HasValue)
+                {
+                    double dx = e.Touches[0].ClientX - _previousTouchX.Value;
+                    double dy = e.Touches[0].ClientY - _previousTouchY.Value;
+                    _context.AddOffsetPx(-dx * 2, dy * 2);
+
+                    _shouldRender = true;
+                    StateHasChanged();
+                }
+
+                _previousTouchX = e.Touches[0].ClientX;
+                _previousTouchY = e.Touches[0].ClientY;
             }
         }
     }
