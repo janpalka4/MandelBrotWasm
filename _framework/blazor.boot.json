@@ -1,11 +1,11 @@
 {
   "mainAssemblyName": "MandelBrotWasm",
   "resources": {
-    "hash": "sha256-8DixZ4zcRp4Zs4XstVcCrEmFdSonnjRTGKuqmNckHhE=",
+    "hash": "sha256-NCetMSMIBm07pz5YnglRFU1KVaEVhcp7Aj1u0DanaHw=",
     "fingerprinting": {
       "Blazor.Extensions.Canvas.JS.iokb7a5y98.wasm": "Blazor.Extensions.Canvas.JS.wasm",
       "Blazor.Extensions.Canvas.45bjdsigtk.wasm": "Blazor.Extensions.Canvas.wasm",
-      "MandelBrotWasm.9lav8ktluu.wasm": "MandelBrotWasm.wasm",
+      "MandelBrotWasm.vvyfko7769.wasm": "MandelBrotWasm.wasm",
       "Microsoft.AspNetCore.Components.Forms.sqwpiwgmh5.wasm": "Microsoft.AspNetCore.Components.Forms.wasm",
       "Microsoft.AspNetCore.Components.p3563j2dct.wasm": "Microsoft.AspNetCore.Components.wasm",
       "Microsoft.AspNetCore.Components.Web.sfi39pt5k8.wasm": "Microsoft.AspNetCore.Components.Web.wasm",
@@ -139,7 +139,7 @@
     "assembly": {
       "Blazor.Extensions.Canvas.JS.iokb7a5y98.wasm": "sha256-ctyeKHsvFswpiKQJpTUUWdSrDGr4UNirukOrWYnwW78=",
       "Blazor.Extensions.Canvas.45bjdsigtk.wasm": "sha256-2AOrAB5tgoiK9wMMmwiE/pKPAtTjzgFudxSl6g4dt9s=",
-      "MandelBrotWasm.9lav8ktluu.wasm": "sha256-o9Ah+38IQRfCfpeMr7XLH5SiCoBcWX57keUVJeeGOhg=",
+      "MandelBrotWasm.vvyfko7769.wasm": "sha256-W4ISLf7nd0AMHTWsumeKGBR1Q3eqLz2t3s+zkkEmpfw=",
       "Microsoft.AspNetCore.Components.Forms.sqwpiwgmh5.wasm": "sha256-BMRz/Ks4E5YBIWRatSSIDeMrQYiysanVpwuD/OYtC9w=",
       "Microsoft.AspNetCore.Components.p3563j2dct.wasm": "sha256-Vc5im+7SK8893kJ3FtzgFVClykF42acpTXhsPhltvdo=",
       "Microsoft.AspNetCore.Components.Web.sfi39pt5k8.wasm": "sha256-GD1Ts0nfsOMC+bwtJGOqRBlLa5ODKMTrkrjpuovBzg0=",
